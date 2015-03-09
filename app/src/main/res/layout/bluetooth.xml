@@ -2,23 +2,26 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/test2"
+    android:id="@+id/BTSettings"
     android:weightSum="1">
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="start search"
-        android:id="@+id/start" />
 
     <ListView
         android:layout_width="match_parent"
-        android:layout_height="372dp"
+        android:layout_height="281dp"
         android:id="@+id/BTDeviceList"
         style="@style/AppTheme"
         android:clickable="true"
         android:visibility="visible"
         android:headerDividersEnabled="false"
-        android:choiceMode="singleChoice" />
+        android:choiceMode="singleChoice"
+        android:background="#ffacc3c4"
+        android:layout_weight="0.11" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="New Text"
+        android:id="@+id/DataReceived"
+        android:layout_weight="0.16" />
 
 </LinearLayout>
