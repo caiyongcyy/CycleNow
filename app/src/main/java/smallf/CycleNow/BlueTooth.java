@@ -37,6 +37,7 @@ import java.util.UUID;
 
 /**
  * Created by smallF on 2015/2/26.
+ * 1.0 mod by xlwang 2015/03/09: Add bluetooth connection methods;
  */
 
 public class BlueTooth extends ActionBarActivity {
@@ -50,10 +51,10 @@ public class BlueTooth extends ActionBarActivity {
     private final static int REQUEST_ENABLE_BT = 1;
     private ClientThread mClientThread = null;
     private String mBTAddress = null;
+    public SocketDataThread mManageConnectedSocket=  null;
 
 
     UUID MyUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,6 +151,11 @@ public class BlueTooth extends ActionBarActivity {
                         mBTListView.setAdapter(mSimpleAdapter);
                     }
                 }
+                else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action))
+                {
+                    setTitle("搜索完成");
+                    Log.d("BroadcastReceiver", "find over");
+                }
             }
         };
         // Register the BroadcastReceiver
@@ -160,7 +166,7 @@ public class BlueTooth extends ActionBarActivity {
     @Override
     protected void onDestroy(){
         unregisterReceiver(mReceiver);
-        mClientThread.cancel();
+        shutdownClient();
         super.onDestroy();
     }
 
@@ -231,15 +237,26 @@ public class BlueTooth extends ActionBarActivity {
         }
     }
 
+    /* 停止客户端连接 */
+    private void shutdownClient() {
+        new Thread() {
+            public void run() {
+                if(mClientThread!=null)
+                {
+                    mClientThread.cancel();
+                    mClientThread= null;
+                }
+            };
+        }.start();
+    }
+
+
     /*蓝牙客户端连接线程*/
     private class ClientThread extends Thread {
-        private final BluetoothSocket mmSocket;
+        private BluetoothSocket mmSocket;
         private final BluetoothDevice mmDevice;
 
         public ClientThread(BluetoothDevice device) {
-            // Use a temporary object that is later assigned to mmSocket,
-            // because mmSocket is final
-            BluetoothSocket tmp = null;
             mmDevice = device;
             try {
                 // 连接建立之前的先配对
@@ -254,18 +271,20 @@ public class BlueTooth extends ActionBarActivity {
                 Toast.makeText(BlueTooth.this, "无法配对！", Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
             }
+        }
+
+        public void run() {
+            BluetoothSocket tmp = null;
+            // Cancel discovery because it will slow down the connection
+            mBluetoothAdapter.cancelDiscovery();
+
             // Get a BluetoothSocket to connect with the given BluetoothDevice
             try{
-                tmp = device.createRfcommSocketToServiceRecord(MyUUID);
+                tmp = mmDevice.createRfcommSocketToServiceRecord(MyUUID);
             }catch (IOException ioexception){
 
             }
             mmSocket = tmp;
-        }
-
-        public void run() {
-            // Cancel discovery because it will slow down the connection
-            mBluetoothAdapter.cancelDiscovery();
 
             try {
                 // Connect the device through the socket. This will block
@@ -275,18 +294,18 @@ public class BlueTooth extends ActionBarActivity {
                 // Unable to connect; close the socket and get out
                 try {
                     mmSocket.close();
+                    Log.e("connect", "", connectException);
+                    Log.d("clientThread", "连接失败");
                     Toast.makeText(BlueTooth.this, "Socket 连接失败！", Toast.LENGTH_SHORT).show();
                 } catch (IOException closeException) {
-                    String str = closeException.getMessage();
-                    Log.e("ABCDE", str);
                 }
                 return;
             }
             Toast.makeText(BlueTooth.this, "Socket 连接成功！", Toast.LENGTH_SHORT).show();
+            Log.d("mBtSocket", "end-->"+ mmSocket);
 
-            // Do work to manage the connection (in a separate thread)
-            ConnectedThread manageConnectedSocket= new ConnectedThread(mmSocket);
-            manageConnectedSocket.run();
+            mManageConnectedSocket = new SocketDataThread(mmSocket);
+            //mManageConnectedSocket.run();
         }
 
         /** Will cancel an in-progress connection, and close the socket */
@@ -298,12 +317,12 @@ public class BlueTooth extends ActionBarActivity {
     }
 
     //Managing a Connection
-    private class ConnectedThread extends Thread {
+    private class SocketDataThread extends Thread {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
 
-        public ConnectedThread(BluetoothSocket socket) {
+        public SocketDataThread(BluetoothSocket socket) {
             mmSocket = socket;
             InputStream tmpIn = null;
             OutputStream tmpOut = null;
@@ -321,19 +340,31 @@ public class BlueTooth extends ActionBarActivity {
 
         public void run() {
             byte[] buffer = new byte[1024];  // buffer store for the stream
-            int bytes; // bytes returned from read()
+            int bytes = 0; // bytes returned from read()
 
             // Keep listening to the InputStream until an exception occurs
-/*            while (true) {
+            while (true) {
                 try {
+                    byte[] buf_data = new byte[bytes];
                     // Read from the InputStream
-                    //bytes = mmInStream.read(buffer);
-                    TextView RecvData = (TextView) findViewById(R.id.DataReceived);
-                    RecvData.setText(buffer.toString());
-                } catch (IOException e) {
+                    if( (bytes = mmInStream.read(buffer))>0 ) {
+                        for(int i=0; i<bytes; i++)
+                        {
+                            buf_data[i] = buffer[i];
+                        }
+                        String s = new String(buf_data);//接收的值inputstream 为 s
+
+                        if(s.equalsIgnoreCase("o")){ //o表示opend!
+                            //isClosed = false;
+                        }
+                        else if(s.equalsIgnoreCase("c")){  //c表示closed!
+                            //isClosed = true;
+                        }
+                    }
+              } catch (IOException e) {
                     break;
                 }
-            }*/
+            }
         }
 
         /* Call this from the main activity to send data to the remote device */

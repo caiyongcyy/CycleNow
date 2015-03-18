@@ -17,11 +17,4 @@
         android:background="#ffacc3c4"
         android:layout_weight="0.11" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="New Text"
-        android:id="@+id/DataReceived"
-        android:layout_weight="0.16" />
-
 </LinearLayout>
