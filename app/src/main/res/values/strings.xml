@@ -14,4 +14,14 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="action_example">Example action</string>
+
+    <string name="str_login_user">user name : </string>
+    <string name="str_login_password">password : </string>
+    <string name="str_login_register">register</string>
+    <string name="str_login_login">login</string>
+    <string name="str_login_state_network">net connecting</string>
+    <string name="str_login_state_verify">user verifying</string>
+    <string name="str_login_state_download">data downloading</string>
+    <string name="str_login_state_ok">load success</string>
+    <string name="str_login_edittext_null">user name or password can not be empty !</string>
 </resources>
