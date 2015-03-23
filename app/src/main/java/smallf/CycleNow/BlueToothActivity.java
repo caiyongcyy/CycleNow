@@ -162,18 +162,16 @@ public class BlueToothActivity extends ActionBarActivity {
     @Override
     protected void onDestroy(){
         unregisterReceiver(mReceiver);
-        shutdownClient();
+        stopService(intent);
         super.onDestroy();
     }
 
     //返回按键不退出该activity
-    @Override
+/*    @Override
     public void onBackPressed(){
-/*        Intent intent = new Intent();
-        intent.setClass(BlueTooth.this, MainActivity.class);
-        startActivity(intent);*/
+
         return;
-    }
+    }*/
 
 /*    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {

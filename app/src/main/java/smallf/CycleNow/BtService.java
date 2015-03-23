@@ -125,6 +125,7 @@ public class BtService extends Service{
                 {
                     String sAdd = intent.getStringExtra("Address");
                     mClientThread = new ClientThread(sAdd);
+                    mClientThread.run();
                 }
             }
         }
@@ -132,17 +133,17 @@ public class BtService extends Service{
 
     public void DisplayToast(String str)
     {
-        Log.d("BlueToothService：",str);
+        Log.i("BlueToothService：",str);
     }
 
     /*蓝牙客户端连接线程*/
     public class ClientThread extends Thread {
         private BluetoothSocket mmSocket;
-        private final BluetoothDevice mmDevice;
+        private  BluetoothDevice mmDevice =null;
 
         public ClientThread(String sAddress) {
+            mBluetoothAdapter = mBluetoothAdapter.getDefaultAdapter();
             mmDevice = mBluetoothAdapter.getRemoteDevice(sAddress);
-
             try {
                 // 连接建立之前的先配对
                 if (mmDevice.getBondState() == BluetoothDevice.BOND_NONE) {
