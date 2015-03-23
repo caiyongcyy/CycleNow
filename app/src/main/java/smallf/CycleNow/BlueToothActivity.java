@@ -6,9 +6,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.IBinder;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-
 
 
 import android.util.Log;
@@ -25,10 +25,6 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,21 +36,21 @@ import java.util.UUID;
  * 1.0 mod by xlwang 2015/03/09: Add bluetooth connection methods;
  */
 
-public class BlueTooth extends ActionBarActivity {
+public class BlueToothActivity extends ActionBarActivity {
     /*variables*/
     private BluetoothAdapter mBluetoothAdapter =null;
     private SimpleAdapter mSimpleAdapter;
     private ArrayList<Map<String,Object>> mBTInfoData= new ArrayList<Map<String,Object>>();
     private ListView mBTListView;
     private BroadcastReceiver mReceiver = null;
-    private BluetoothDevice mBluetoothDevice;
     private final static int REQUEST_ENABLE_BT = 1;
-    private ClientThread mClientThread = null;
-    private String mBTAddress = null;
-    public SocketDataThread mManageConnectedSocket=  null;
+    IBinder serviceBinder;
+    BtService btServ;
+    Intent intent;
 
-
-    UUID MyUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    /**************service 命令*********/
+    static final int CMD_STOP_SERVICE = 0x01;
+    static final int CMD_INIT =0x03;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +58,8 @@ public class BlueTooth extends ActionBarActivity {
         setContentView(R.layout.bluetooth);
         setTitle(" 蓝牙设置");
 
+        intent = new Intent(this,BtService.class);
+        startService(intent);
         BlueToothProc();
     }
 
@@ -82,10 +80,7 @@ public class BlueTooth extends ActionBarActivity {
             //String sTitle = mSimpleAdapter.getItem(position).toString();
             Map<String,String> item = new HashMap<String,String>();
             item = (Map)mSimpleAdapter.getItem(position);
-            mBluetoothDevice = mBluetoothAdapter.getRemoteDevice(item.get("Address"));
-            mBTAddress = mBluetoothDevice.getAddress();
-            mClientThread = new ClientThread(mBluetoothDevice);
-            mClientThread.run();
+            BlueToothActivity.this.SendInit(item.get("Address"));
             }
         });
 
@@ -160,14 +155,39 @@ public class BlueTooth extends ActionBarActivity {
         };
         // Register the BroadcastReceiver
         IntentFilter filter1 = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        filter1.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         registerReceiver(mReceiver, filter1); // Don't forget to unregister during onDestroy
     }
 
     @Override
     protected void onDestroy(){
         unregisterReceiver(mReceiver);
-        shutdownClient();
+        stopService(intent);
         super.onDestroy();
+    }
+
+    //返回按键不退出该activity
+/*    @Override
+    public void onBackPressed(){
+
+        return;
+    }*/
+
+/*    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            moveTaskToBack(true);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }*/
+
+    public void SendInit(String sAddress){
+        Intent intent = new Intent();//创建Intent对象
+        intent.setAction("android.intent.action.cmd");
+        intent.putExtra("cmd", CMD_INIT);
+        intent.putExtra("Address", sAddress);
+        sendBroadcast(intent);//发送广播
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -212,7 +232,7 @@ public class BlueTooth extends ActionBarActivity {
             }
 
             private View makeItemView(String strTitle, String strText, int resId) {
-                LayoutInflater inflater = (LayoutInflater) BlueTooth.this
+                LayoutInflater inflater = (LayoutInflater) BlueToothActivity.this
                         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
                 // 使用View的对象itemView与R.layout.item关联
@@ -239,147 +259,7 @@ public class BlueTooth extends ActionBarActivity {
 
     /* 停止客户端连接 */
     private void shutdownClient() {
-        new Thread() {
-            public void run() {
-                if(mClientThread!=null)
-                {
-                    mClientThread.cancel();
-                    mClientThread= null;
-                }
-            };
-        }.start();
     }
 
-
-    /*蓝牙客户端连接线程*/
-    private class ClientThread extends Thread {
-        private BluetoothSocket mmSocket;
-        private final BluetoothDevice mmDevice;
-
-        public ClientThread(BluetoothDevice device) {
-            mmDevice = device;
-            try {
-                // 连接建立之前的先配对
-                if (device.getBondState() == BluetoothDevice.BOND_NONE) {
-                    Method creMethod = BluetoothDevice.class
-                            .getMethod("createBond");
-                    creMethod.invoke(device);
-                } else {
-                }
-            } catch (Exception e) {
-                // TODO: handle exception
-                Toast.makeText(BlueTooth.this, "无法配对！", Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
-            }
-        }
-
-        public void run() {
-            BluetoothSocket tmp = null;
-            // Cancel discovery because it will slow down the connection
-            mBluetoothAdapter.cancelDiscovery();
-
-            // Get a BluetoothSocket to connect with the given BluetoothDevice
-            try{
-                tmp = mmDevice.createRfcommSocketToServiceRecord(MyUUID);
-            }catch (IOException ioexception){
-
-            }
-            mmSocket = tmp;
-
-            try {
-                // Connect the device through the socket. This will block
-                // until it succeeds or throws an exception
-                mmSocket.connect();
-            } catch (IOException connectException) {
-                // Unable to connect; close the socket and get out
-                try {
-                    mmSocket.close();
-                    Log.e("connect", "", connectException);
-                    Log.d("clientThread", "连接失败");
-                    Toast.makeText(BlueTooth.this, "Socket 连接失败！", Toast.LENGTH_SHORT).show();
-                } catch (IOException closeException) {
-                }
-                return;
-            }
-            Toast.makeText(BlueTooth.this, "Socket 连接成功！", Toast.LENGTH_SHORT).show();
-            Log.d("mBtSocket", "end-->"+ mmSocket);
-
-            mManageConnectedSocket = new SocketDataThread(mmSocket);
-            //mManageConnectedSocket.run();
-        }
-
-        /** Will cancel an in-progress connection, and close the socket */
-        public void cancel() {
-            try {
-                mmSocket.close();
-            } catch (IOException e) { }
-        }
-    }
-
-    //Managing a Connection
-    private class SocketDataThread extends Thread {
-        private final BluetoothSocket mmSocket;
-        private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
-
-        public SocketDataThread(BluetoothSocket socket) {
-            mmSocket = socket;
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
-
-            // Get the input and output streams, using temp objects because
-            // member streams are final
-            try {
-                tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
-            } catch (IOException e) { }
-
-            mmInStream = tmpIn;
-            mmOutStream = tmpOut;
-        }
-
-        public void run() {
-            byte[] buffer = new byte[1024];  // buffer store for the stream
-            int bytes = 0; // bytes returned from read()
-
-            // Keep listening to the InputStream until an exception occurs
-            while (true) {
-                try {
-                    byte[] buf_data = new byte[bytes];
-                    // Read from the InputStream
-                    if( (bytes = mmInStream.read(buffer))>0 ) {
-                        for(int i=0; i<bytes; i++)
-                        {
-                            buf_data[i] = buffer[i];
-                        }
-                        String s = new String(buf_data);//接收的值inputstream 为 s
-
-                        if(s.equalsIgnoreCase("o")){ //o表示opend!
-                            //isClosed = false;
-                        }
-                        else if(s.equalsIgnoreCase("c")){  //c表示closed!
-                            //isClosed = true;
-                        }
-                    }
-              } catch (IOException e) {
-                    break;
-                }
-            }
-        }
-
-        /* Call this from the main activity to send data to the remote device */
-        public void write(byte[] bytes) {
-            try {
-                mmOutStream.write(bytes);
-            } catch (IOException e) { }
-        }
-
-        /* Call this from the main activity to shutdown the connection */
-        public void cancel() {
-            try {
-                mmSocket.close();
-            } catch (IOException e) { }
-        }
-    }
 }
 
