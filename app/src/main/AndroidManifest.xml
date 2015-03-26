@@ -31,7 +31,21 @@
         <activity
             android:name="smallf.CycleNow.MainFrameView"
             android:theme="@style/MyTheme">
-
+        </activity>
+        <activity
+            android:name="smallf.CycleNow.RouteDatabase"
+            android:theme="@style/MyTheme"
+            android:label="路线库">
+        </activity>
+        <activity
+            android:name="smallf.CycleNow.DeviceView"
+            android:label="设备"
+            android:theme="@style/MyTheme">
+        </activity>
+        <activity
+            android:name="smallf.CycleNow.RankingList"
+            android:label="排行榜"
+            android:theme="@style/MyTheme">
         </activity>
     </application>
 

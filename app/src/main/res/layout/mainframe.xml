@@ -23,7 +23,7 @@
         <!-- The navigation drawer -->
 
         <ListView
-            android:id="@+id/left_drawer_list"
+            android:id="@+id/mainframe_left_list"
             android:layout_width="200dp"
             android:layout_height="300dp"
             android:layout_gravity="start"
