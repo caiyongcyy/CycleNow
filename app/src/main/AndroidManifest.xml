@@ -9,12 +9,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/cyclenow"
         android:label="@string/app_name"
-<<<<<<< HEAD
-        android:theme="@style/AppTheme" >
-        <service android:name=".BtService"></service>
-=======
         android:theme="@style/NoTitle" >
->>>>>>> whl/branch
         <activity
             android:name="smallf.CycleNow.MainActivity"
             android:label="@string/app_name" >
@@ -28,10 +23,6 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".BlueToothActivity"
-            android:label="@string/app_name" >
         </activity>
         <activity
             android:name="smallf.CycleNow.MainFrameView"
@@ -53,5 +44,4 @@
             android:theme="@style/MyTheme">
         </activity>
     </application>
-
 </manifest>

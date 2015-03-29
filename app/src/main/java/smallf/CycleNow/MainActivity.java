@@ -59,7 +59,7 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onClick(View w) {
                 Intent intent = new Intent();
-                intent.setClass(MainActivity.this,BlueToothActivity.class);
+                intent.setClass(MainActivity.this,DeviceView.class);
                 startActivity(intent);
             }
         });
