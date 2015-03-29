@@ -1,24 +1,22 @@
 package smallf.CycleNow;
 
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.IBinder;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-
-
+import android.os.IBinder;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
-
 import android.widget.BaseAdapter;
-import android.bluetooth.BluetoothAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -29,14 +27,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 /**
- * Created by smallF on 2015/2/26.
+ * Created by Administrator on 2015/3/26.
  * 1.0 mod by xlwang 2015/03/09: Add bluetooth connection methods;
  */
-
-public class BlueToothActivity extends ActionBarActivity {
+public class DeviceView  extends Activity{
     /*variables*/
     private BluetoothAdapter mBluetoothAdapter =null;
     private SimpleAdapter mSimpleAdapter;
@@ -55,9 +51,10 @@ public class BlueToothActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.bluetooth);
-        setTitle(" 蓝牙设置");
-
+        requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
+        setContentView(R.layout.device);
+        getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.customtitle);
+        setTitle("蓝牙设备管理");
         intent = new Intent(this,BtService.class);
         startService(intent);
         BlueToothProc();
@@ -77,10 +74,10 @@ public class BlueToothActivity extends ActionBarActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position,
                                     long id) {
-            //String sTitle = mSimpleAdapter.getItem(position).toString();
-            Map<String,String> item = new HashMap<String,String>();
-            item = (Map)mSimpleAdapter.getItem(position);
-            BlueToothActivity.this.SendInit(item.get("Address"));
+                //String sTitle = mSimpleAdapter.getItem(position).toString();
+                Map<String,String> item = new HashMap<String,String>();
+                item = (Map)mSimpleAdapter.getItem(position);
+                DeviceView.this.SendInit(item.get("Address"));
             }
         });
 
@@ -123,7 +120,7 @@ public class BlueToothActivity extends ActionBarActivity {
         // Create a BroadcastReceiver for ACTION_FOUND
         mReceiver = new BroadcastReceiver() {
             public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
+                String action = intent.getAction();
                 // When discovery finds a device
                 if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                     // Get the BluetoothDevice object from the Intent
@@ -166,22 +163,6 @@ public class BlueToothActivity extends ActionBarActivity {
         super.onDestroy();
     }
 
-    //返回按键不退出该activity
-/*    @Override
-    public void onBackPressed(){
-
-        return;
-    }*/
-
-/*    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            moveTaskToBack(true);
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }*/
-
     public void SendInit(String sAddress){
         Intent intent = new Intent();//创建Intent对象
         intent.setAction("android.intent.action.cmd");
@@ -204,62 +185,59 @@ public class BlueToothActivity extends ActionBarActivity {
             default:
                 break;
         }
-
-        /*Customed ListViewAdapter*/
-        class ListViewAdapter extends BaseAdapter {
-            View[] itemViews;
-
-            public ListViewAdapter(String[] itemTitles, String[] itemTexts,
-                                   int[] itemImageRes) {
-                itemViews = new View[itemTitles.length];
-
-                for (int i = 0; i < itemViews.length; i++) {
-                    itemViews[i] = makeItemView(itemTitles[i], itemTexts[i],
-                            itemImageRes[i]);
-                }
-            }
-
-            public int getCount() {
-                return itemViews.length;
-            }
-
-            public View getItem(int position) {
-                return itemViews[position];
-            }
-
-            public long getItemId(int position) {
-                return position;
-            }
-
-            private View makeItemView(String strTitle, String strText, int resId) {
-                LayoutInflater inflater = (LayoutInflater) BlueToothActivity.this
-                        .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-                // 使用View的对象itemView与R.layout.item关联
-                View itemView = inflater.inflate(R.layout.bt_listview, null);
-
-                // 通过findViewById()方法实例R.layout.item内各组件
-                TextView title = (TextView) itemView.findViewById(R.id.Name);
-                title.setText(strTitle);
-                TextView text = (TextView) itemView.findViewById(R.id.Address);
-                text.setText(strText);
-                ImageView image = (ImageView) itemView.findViewById(R.id.ItemImage);
-                image.setImageResource(resId);
-
-                return itemView;
-            }
-
-            public View getView(int position, View convertView, ViewGroup parent) {
-                if (convertView == null)
-                    return itemViews[position];
-                return convertView;
-            }
-        }
     }
 
+    /*Customed ListViewAdapter*/
+    class ListViewAdapter extends BaseAdapter {
+        View[] itemViews;
+
+        public ListViewAdapter(String[] itemTitles, String[] itemTexts,
+                               int[] itemImageRes) {
+            itemViews = new View[itemTitles.length];
+
+            for (int i = 0; i < itemViews.length; i++) {
+                itemViews[i] = makeItemView(itemTitles[i], itemTexts[i],
+                        itemImageRes[i]);
+            }
+        }
+
+        public int getCount() {
+            return itemViews.length;
+        }
+
+        public View getItem(int position) {
+            return itemViews[position];
+        }
+
+        public long getItemId(int position) {
+            return position;
+        }
+
+        private View makeItemView(String strTitle, String strText, int resId) {
+            LayoutInflater inflater = (LayoutInflater) DeviceView.this
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+            // 使用View的对象itemView与R.layout.item关联
+            View itemView = inflater.inflate(R.layout.bt_listview, null);
+
+            // 通过findViewById()方法实例R.layout.item内各组件
+            TextView title = (TextView) itemView.findViewById(R.id.Name);
+            title.setText(strTitle);
+            TextView text = (TextView) itemView.findViewById(R.id.Address);
+            text.setText(strText);
+            ImageView image = (ImageView) itemView.findViewById(R.id.ItemImage);
+            image.setImageResource(resId);
+
+            return itemView;
+        }
+
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null)
+                return itemViews[position];
+            return convertView;
+        }
+    }
     /* 停止客户端连接 */
     private void shutdownClient() {
     }
-
 }
-
