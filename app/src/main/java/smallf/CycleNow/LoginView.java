@@ -5,9 +5,11 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v7.app.ActionBarActivity;
+import android.app.Activity;
 import android.os.Message;
 import android.os.Handler;
 import android.view.View;
+import android.view.Window;
 import android.widget.TextView;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -18,7 +20,7 @@ import java.lang.String;
 /**
  * Created by Administrator on 2015/3/19.
  */
-public class LoginView extends ActionBarActivity {
+public class LoginView extends Activity {
 
     EditText edittext_user;
     EditText edittext_password;
@@ -43,7 +45,9 @@ public class LoginView extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
         setContentView(R.layout.loginview);
+        getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.customtitle);
 
         edittext_user = (EditText)findViewById(R.id.login_edittext_user);
         edittext_password = (EditText)findViewById(R.id.login_edittext_password);
@@ -52,6 +56,9 @@ public class LoginView extends ActionBarActivity {
         progressbar_login = (ProgressBar)findViewById(R.id.login_progressBar_login);
         textview_login_state = (TextView)findViewById(R.id.login_textview_loginstate);
 
+        /*开发过程写入nama，password方便登陆，后续删除*/
+        edittext_user.setText("张三");
+        edittext_password.setText("123");
         btn_register.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -101,7 +108,7 @@ public class LoginView extends ActionBarActivity {
                 SystemClock.sleep(15);
             }
             Message msg = new Message();
-            msg.what = Terminate_Progress;
+            msg.what = Login_Success;
             LoginView.this.myhandler.sendMessage(msg);
         }
     }
@@ -129,9 +136,16 @@ public class LoginView extends ActionBarActivity {
                 btn_login.setEnabled(true);
             }
             else if(msg.what == Login_Success){
-            /*        Intent in = new Intent();
-                    in.setClassName( getApplicationContext(), "smallf.CycleNow.MainActivity");
-                    startActivity( in );*/
+                    progressbar_login.setVisibility(View.GONE);
+                    textview_login_state.setVisibility(View.GONE);
+                    edittext_user.setEnabled(true);
+                    edittext_password.setEnabled(true);
+                    btn_login.setEnabled(true);
+
+                    Intent in = new Intent();
+                    in.setClassName( getApplicationContext(), "smallf.CycleNow.MainFrameView");
+                    startActivity( in );
+                    LoginView.this.finish();
             }
 
             super.handleMessage(msg);

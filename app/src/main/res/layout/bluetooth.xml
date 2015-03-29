@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="281dp"
         android:id="@+id/BTDeviceList"
-        style="@style/AppTheme"
+        style="@style/NoTitle"
         android:clickable="true"
         android:visibility="visible"
         android:headerDividersEnabled="false"
