@@ -42,7 +42,6 @@ public class DeviceView  extends Activity{
     private final static int REQUEST_ENABLE_BT = 1;
     IBinder serviceBinder;
     BtService btServ;
-    Intent intent;
 
     /**************service 命令*********/
     static final int CMD_STOP_SERVICE = 0x01;
@@ -55,8 +54,6 @@ public class DeviceView  extends Activity{
         setContentView(R.layout.device);
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.customtitle);
         setTitle("蓝牙设备管理");
-        intent = new Intent(this,BtService.class);
-        startService(intent);
         BlueToothProc();
     }
 
@@ -159,7 +156,6 @@ public class DeviceView  extends Activity{
     @Override
     protected void onDestroy(){
         unregisterReceiver(mReceiver);
-        stopService(intent);
         super.onDestroy();
     }
 
