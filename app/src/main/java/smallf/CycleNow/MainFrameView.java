@@ -11,6 +11,7 @@ import android.view.Window;
 import android.view.LayoutInflater;
 import android.widget.Adapter;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.support.v4.widget.DrawerLayout;
@@ -31,16 +32,22 @@ import android.content.Context;
 public class MainFrameView extends Activity {
 
     private boolean bLeftViewState = false;
+    static final int CMD_SEND_DATA = 0x02;
+    static final int CMD_RUN = 0x04;
 
     DrawerLayout mDrawerLayout;
     ListView myList;  // ListView控件
     List<Map<String, Object>> m_Data;
+    Intent intent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
         setContentView(R.layout.mainframe);
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE,R.layout.mycustomtitle);
+        intent = new Intent(this,BtService.class);
+        startService(intent);
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         myList = (ListView) findViewById(R.id.mainframe_left_list);
@@ -57,10 +64,31 @@ public class MainFrameView extends Activity {
                 }
             }
         });
-
         MyAdapter adapter = new MyAdapter(this);
         m_Data = getData();
         myList.setAdapter(adapter);
+
+        Button button_start = (Button)findViewById(R.id.button_start);
+        button_start.setOnClickListener(new View.OnClickListener(){
+            boolean pressed = false;
+
+            @Override
+            public void onClick(View v) {
+                if (pressed == false) {
+                    //得到textview实例
+                    TextView hellotv = (TextView) findViewById(R.id.textView);
+                    //读取strings.xml定义的interact_message信息并写到textview上
+                    hellotv.setText("Started!!");
+
+                    SendCmdRun();
+                    pressed = true;
+                } else {
+                    TextView hellotv = (TextView) findViewById(R.id.textView);
+                    hellotv.setText("路线");
+                    pressed = false;
+                }
+            }
+           });
     }
 
     private List<Map<String, Object>> getData() {
@@ -86,7 +114,6 @@ public class MainFrameView extends Activity {
 
         return list;
     }
-
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -149,4 +176,30 @@ public class MainFrameView extends Activity {
            return convertView;
         }
     }
+    @Override
+    protected void onDestroy(){
+        stopService(intent);
+        super.onDestroy();
+    }
+
+    //向串口发送数据
+    public void SendData(byte command, int value){
+        Intent intent = new Intent();//创建Intent对象
+        intent.setAction("android.intent.action.cmd");
+        intent.putExtra("cmd", CMD_SEND_DATA);
+        intent.putExtra("command", command);
+        intent.putExtra("value", value);
+        sendBroadcast(intent);//发送广播
+    }
+
+    //开始运行
+    public void SendCmdRun(){
+        Intent intent = new Intent();//创建Intent对象
+        intent.setAction("android.intent.action.cmd");
+        intent.putExtra("cmd", CMD_RUN);
+        sendBroadcast(intent);//发送广播
+    }
 }
+
+
+

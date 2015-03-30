@@ -12,6 +12,6 @@
         android:visibility="visible"
         android:headerDividersEnabled="false"
         android:choiceMode="singleChoice"
-        android:background="#ffacc3c4"
+        android:background="#fff6fcf8"
         android:layout_weight="0.11" />
 </LinearLayout>
