@@ -173,13 +173,13 @@ public class LoginView extends Activity {
                 SystemClock.sleep(15);
             }
             Message msg = new Message();
-            LoginView.this.myhandler.sendMessage(msg);
             if(bTerminateFlag){
                 msg.what = Terminate_Progress;
             }
             else {
                 msg.what = Login_Success;
             }
+            LoginView.this.myhandler.sendMessage(msg);
         }
     }
 
@@ -200,10 +200,13 @@ public class LoginView extends Activity {
             }
             else if (msg.what == Terminate_Progress){
                 progressbar_login.setVisibility(View.GONE);
-                textview_login_state.setVisibility(View.GONE);
                 edittext_user.setEnabled(true);
                 edittext_password.setEnabled(true);
                 btn_login.setEnabled(true);
+
+                textview_login_state.setTextColor(Color.rgb(255,0,0));
+                textview_login_state.setVisibility(View.VISIBLE);
+                textview_login_state.setText(R.string.str_logoin_fail);
             }
             else if(msg.what == Login_Success){
                     progressbar_login.setVisibility(View.GONE);
@@ -212,17 +215,10 @@ public class LoginView extends Activity {
                     edittext_password.setEnabled(true);
                     btn_login.setEnabled(true);
 
-                    if(!VerifyUser(edittext_user.getText().toString(), edittext_password.getText().toString())){
-                        textview_login_state.setVisibility(View.VISIBLE);
-                        textview_login_state.setText("用户名或密码不正确");
-                    }
-                    else {
-
-                        Intent in = new Intent();
-                        in.setClassName(getApplicationContext(), "smallf.CycleNow.MainFrameView");
-                        startActivity(in);
-                        LoginView.this.finish();
-                    }
+                    Intent in = new Intent();
+                    in.setClassName(getApplicationContext(), "smallf.CycleNow.MainFrameView");
+                    startActivity(in);
+                    LoginView.this.finish();
             }
 
             super.handleMessage(msg);
