@@ -69,6 +69,10 @@ public class BtService extends Service{
         // TODO Auto-generated method stub
         super.onDestroy();
         this.unregisterReceiver(cmdReceiver);//取消注册的CommandReceiver
+        if(mClientThread != null)
+        {
+            mClientThread.cancel();
+        }
         boolean retry = true;
     }
 
