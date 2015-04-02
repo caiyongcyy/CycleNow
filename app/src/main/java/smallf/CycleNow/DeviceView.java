@@ -1,4 +1,4 @@
-﻿package smallf.CycleNow;
+package smallf.CycleNow;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -52,7 +52,7 @@ public class DeviceView  extends Activity{
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.device);
-        getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.customtitle);
+        //getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.customtitle);
         setTitle("蓝牙设备管理");
         BlueToothProc();
     }
