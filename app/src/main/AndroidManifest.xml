@@ -9,13 +9,11 @@
         android:allowBackup="true"
         android:icon="@mipmap/cyclenow"
         android:label="@string/app_name"
-        android:theme="@style/NoTitle" >
         <service android:name=".BtService"></service>
-
         <activity
             android:name="smallf.CycleNow.LoginView"
-            android:label="@string/app_name"
-            android:theme="@style/MyTheme">
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -24,22 +22,23 @@
         </activity>
         <activity
             android:name="smallf.CycleNow.MainFrameView"
-            android:theme="@style/MyTheme">
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|keyboardHidden|screenSize">
         </activity>
         <activity
             android:name="smallf.CycleNow.RouteDatabase"
-            android:theme="@style/MyTheme"
-            android:label="路线库">
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|keyboardHidden|screenSize">
         </activity>
         <activity
             android:name="smallf.CycleNow.DeviceView"
-            android:label="设备"
-            android:theme="@style/MyTheme">
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|keyboardHidden|screenSize">
         </activity>
         <activity
             android:name="smallf.CycleNow.RankingList"
-            android:label="排行榜"
-            android:theme="@style/MyTheme">
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|keyboardHidden|screenSize">
         </activity>
     </application>
 </manifest>

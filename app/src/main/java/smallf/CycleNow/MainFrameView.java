@@ -1,4 +1,4 @@
-package smallf.CycleNow;
+﻿package smallf.CycleNow;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,6 +19,8 @@ import android.view.KeyEvent;
 import android.widget.Toast;
 import android.widget.SimpleAdapter;
 import android.widget.ListView;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -43,7 +45,7 @@ public class MainFrameView extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.mainframe);
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE,R.layout.mycustomtitle);
         intent = new Intent(this,BtService.class);
@@ -64,9 +66,6 @@ public class MainFrameView extends Activity {
                 }
             }
         });
-        MyAdapter adapter = new MyAdapter(this);
-        m_Data = getData();
-        myList.setAdapter(adapter);
 
         Button button_start = (Button)findViewById(R.id.button_start);
         button_start.setOnClickListener(new View.OnClickListener(){
@@ -89,25 +88,39 @@ public class MainFrameView extends Activity {
                 }
             }
            });
+
+        SimpleAdapter adapter = new SimpleAdapter(this, getData(), R.layout.mainframe_left_list,new String[]{"img", "description", }, new int[]{R.id.left_list_img, R.id.left_list_textview});
+        m_Data = getData();
+        myList.setAdapter(adapter);
+
+        myList.setOnItemClickListener(new OnItemClickListener(){
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position,long id) {
+                // TODO Auto-generated method stub
+                Intent in = new Intent();
+                in.setClassName(MainFrameView.this, (String) m_Data.get(position).get("view"));
+                startActivity(in);
+            }
+        });
     }
 
     private List<Map<String, Object>> getData() {
         List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 
         Map<String, Object> map = new HashMap<String, Object>();
-        map.put("img_btn", R.drawable.bluetooth);
+        map.put("img", R.drawable.bluetooth);
         map.put("description", "路线库");
         map.put("view", "smallf.CycleNow.RouteDatabase");
         list.add(map);
 
         map = new HashMap<String, Object>();
-        map.put("img_btn", R.drawable.bluetooth);
+        map.put("img", R.drawable.bluetooth);
         map.put("description", "设备");
         map.put("view", "smallf.CycleNow.DeviceView");
         list.add(map);
 
         map = new HashMap<String, Object>();
-        map.put("img_btn", R.drawable.bluetooth);
+        map.put("img", R.drawable.bluetooth);
         map.put("description", "排行榜");
         map.put("view", "smallf.CycleNow.RankingList");
         list.add(map);
@@ -130,7 +143,7 @@ public class MainFrameView extends Activity {
         return true;
     }
 
-    public final class ViewHolder{
+    /*public final class ViewHolder{
         public ImageButton imgbtn;
         public TextView textview;
     }

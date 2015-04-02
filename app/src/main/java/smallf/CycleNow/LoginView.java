@@ -14,7 +14,8 @@ import android.widget.TextView;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.EditText;
-
+import android.content.ContentValues;
+import android.database.Cursor;
 import java.lang.String;
 
 /**
@@ -29,7 +30,8 @@ public class LoginView extends Activity {
     ProgressBar progressbar_login;
     TextView textview_login_state;
 
-    ThreadLogin loginthread;
+    UIThread loginthread;
+    VerifyThread thread_verify;
 
     int nProgressMax = 100;
     int nThresholdVerify = nProgressMax/3;
@@ -37,17 +39,20 @@ public class LoginView extends Activity {
     int nThresholdOver = nProgressMax-1;
 
     boolean bTerminateFlag = false; //置为true可停止登陆UI刷新
+    boolean bVerifySuccess = false;
 
 
     int Refressh_UI_Value = 1;
     int Terminate_Progress = 2;
     int Login_Success = 3;
+
+    DBHelper helper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.loginview);
-        getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.customtitle);
+    //    getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.customtitle);
 
         edittext_user = (EditText)findViewById(R.id.login_edittext_user);
         edittext_password = (EditText)findViewById(R.id.login_edittext_password);
@@ -57,7 +62,7 @@ public class LoginView extends Activity {
         textview_login_state = (TextView)findViewById(R.id.login_textview_loginstate);
 
         /*开发过程写入nama，password方便登陆，后续删除*/
-        edittext_user.setText("张三");
+        edittext_user.setText("李四");
         edittext_password.setText("123");
         btn_register.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -87,15 +92,72 @@ public class LoginView extends Activity {
                 textview_login_state.setVisibility(View.VISIBLE);
 
                 bTerminateFlag = false;
-                loginthread = new ThreadLogin();
+                bVerifySuccess = false;
+                loginthread = new UIThread();
                 loginthread.start();
 
+                new VerifyThread().start();
+
                 //添加用户验证
+
+                DBHelper helper = new DBHelper(getApplicationContext());
+
+
             }
         });
+
+        InitSQLValue();
     }
 
-    class ThreadLogin extends Thread {
+    private void InitSQLValue(){
+        String name = "李四";
+        String desc = "123";
+        ContentValues values = new ContentValues();
+        values.put("name", name);
+        values.put("desc", desc);
+        helper = new DBHelper(getApplicationContext());
+        helper.insert(values);
+    }
+
+    private Boolean VerifyUser(String username, String password){
+        Cursor c = helper.query();
+        if(c.moveToFirst() == false){
+            return true;
+        }
+
+        int nNameIndex = c.getColumnIndex("name");
+        int nPasswordIndex = c.getColumnIndex("desc");
+
+        while(c.moveToNext()){
+            if(c.getString(nNameIndex).equals(username) && c.getString(nPasswordIndex).equals(password)){
+                helper.close();
+                return true;
+            }
+        }
+        helper.close();
+        return false;
+    }
+
+    class VerifyThread extends Thread{
+        @Override
+        public void run(){
+            String name = edittext_user.getText().toString();
+            String password = edittext_password.getText().toString();
+
+            int nCount = 0;
+            int nMaxCount = 1000;
+            while(bVerifySuccess == false && nCount < nMaxCount) {
+                bVerifySuccess = VerifyUser(name, password);
+                nCount++;
+            }
+            /*超时处理*/
+            if(bVerifySuccess == false && nCount == nMaxCount){
+                bTerminateFlag = true;
+            }
+        }
+    }
+
+    class UIThread extends Thread {
         @Override
         public void run() {
             int nProgress = 0;
@@ -105,10 +167,18 @@ public class LoginView extends Activity {
                 msg.arg1 = nProgress;
                 LoginView.this.myhandler.sendMessage(msg);
                 nProgress++;
+                if(nProgress == nThresholdVerify && bVerifySuccess == false){
+                    nProgress--;
+                }
                 SystemClock.sleep(15);
             }
             Message msg = new Message();
-            msg.what = Login_Success;
+            if(bTerminateFlag){
+                msg.what = Terminate_Progress;
+            }
+            else {
+                msg.what = Login_Success;
+            }
             LoginView.this.myhandler.sendMessage(msg);
         }
     }
@@ -130,10 +200,13 @@ public class LoginView extends Activity {
             }
             else if (msg.what == Terminate_Progress){
                 progressbar_login.setVisibility(View.GONE);
-                textview_login_state.setVisibility(View.GONE);
                 edittext_user.setEnabled(true);
                 edittext_password.setEnabled(true);
                 btn_login.setEnabled(true);
+
+                textview_login_state.setTextColor(Color.rgb(255,0,0));
+                textview_login_state.setVisibility(View.VISIBLE);
+                textview_login_state.setText(R.string.str_logoin_fail);
             }
             else if(msg.what == Login_Success){
                     progressbar_login.setVisibility(View.GONE);
@@ -143,8 +216,8 @@ public class LoginView extends Activity {
                     btn_login.setEnabled(true);
 
                     Intent in = new Intent();
-                    in.setClassName( getApplicationContext(), "smallf.CycleNow.MainFrameView");
-                    startActivity( in );
+                    in.setClassName(getApplicationContext(), "smallf.CycleNow.MainFrameView");
+                    startActivity(in);
                     LoginView.this.finish();
             }
 
