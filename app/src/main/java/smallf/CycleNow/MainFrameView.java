@@ -1,4 +1,4 @@
-﻿package smallf.CycleNow;
+package smallf.CycleNow;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -47,7 +47,7 @@ public class MainFrameView extends Activity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.mainframe);
-        getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE,R.layout.mycustomtitle);
+        //getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE,R.layout.mycustomtitle);
         intent = new Intent(this,BtService.class);
         startService(intent);
 
@@ -188,7 +188,8 @@ public class MainFrameView extends Activity {
             });
            return convertView;
         }
-    }
+    }*/
+
     @Override
     protected void onDestroy(){
         stopService(intent);
