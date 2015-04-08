@@ -1,5 +1,14 @@
 package smallf.CycleNow;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -21,7 +30,11 @@ import java.lang.String;
 /**
  * Created by Administrator on 2015/3/19.
  */
+
+
+
 public class LoginView extends Activity {
+
 
     EditText edittext_user;
     EditText edittext_password;
@@ -32,6 +45,9 @@ public class LoginView extends Activity {
 
     UIThread loginthread;
     VerifyThread thread_verify;
+    NetComunication netlink;
+
+    //NetComunication linkserver;
 
     int nProgressMax = 100;
     int nThresholdVerify = nProgressMax/3;
@@ -41,10 +57,18 @@ public class LoginView extends Activity {
     boolean bTerminateFlag = false; //置为true可停止登陆UI刷新
     boolean bVerifySuccess = false;
 
+    /*msg type*/
+    int UI_REFRESH = 0;
+    int LOGIN_VERIFY = 1;
+    int LOGIN_RESULT = 2;
 
-    int Refressh_UI_Value = 1;
-    int Terminate_Progress = 2;
-    int Login_Success = 3;
+    /*login verify result*/
+    int LOGIN_VERIFY_SUCCESS = 0;
+    int LOGIN_VERIFY_FAIL = 1;
+
+    /*login result*/
+    int LOGIN_RESULT_SUCCESS = 0;
+    int LOGIN_RESULT_FAIL = 1;
 
     DBHelper helper;
     @Override
@@ -60,6 +84,8 @@ public class LoginView extends Activity {
         btn_login = (Button)findViewById(R.id.login_btn_login);
         progressbar_login = (ProgressBar)findViewById(R.id.login_progressBar_login);
         textview_login_state = (TextView)findViewById(R.id.login_textview_loginstate);
+        netlink = new NetComunication(myhandler);
+
 
         /*开发过程写入nama，password方便登陆，后续删除*/
         edittext_user.setText("李四");
@@ -95,21 +121,22 @@ public class LoginView extends Activity {
                 bVerifySuccess = false;
                 loginthread = new UIThread();
                 loginthread.start();
-
+                //NetComunication.Instance().start();
                 new VerifyThread().start();
 
-                //添加用户验证
 
-                DBHelper helper = new DBHelper(getApplicationContext());
+                //添加用户验证
+                //DBHelper helper = new DBHelper(getApplicationContext());
 
 
             }
         });
 
-        InitSQLValue();
+        //InitSQLValue();
+
     }
 
-    private void InitSQLValue(){
+    /*private void InitSQLValue(){
         String name = "李四";
         String desc = "123";
         ContentValues values = new ContentValues();
@@ -117,7 +144,7 @@ public class LoginView extends Activity {
         values.put("desc", desc);
         helper = new DBHelper(getApplicationContext());
         helper.insert(values);
-    }
+    }*/
 
     private Boolean VerifyUser(String username, String password){
         Cursor c = helper.query();
@@ -138,22 +165,23 @@ public class LoginView extends Activity {
         return false;
     }
 
+    String str = "abc";
     class VerifyThread extends Thread{
         @Override
         public void run(){
+            netlink.InitSocket();
+            netlink.start();
             String name = edittext_user.getText().toString();
             String password = edittext_password.getText().toString();
-
-            int nCount = 0;
-            int nMaxCount = 1000;
-            while(bVerifySuccess == false && nCount < nMaxCount) {
-                bVerifySuccess = VerifyUser(name, password);
-                nCount++;
-            }
-            /*超时处理*/
-            if(bVerifySuccess == false && nCount == nMaxCount){
+            String msg = "login" + ":" + name + ":" + password;
+            netlink.SendMessage(msg);
+            SystemClock.sleep(2000);
+            /*登陆验证超时*/
+            if(!bVerifySuccess){
                 bTerminateFlag = true;
             }
+            netlink.CloseThread();
+
         }
     }
 
@@ -163,7 +191,7 @@ public class LoginView extends Activity {
             int nProgress = 0;
             while((!bTerminateFlag) && (nProgress < nProgressMax)) {
                 Message msg = new Message();
-                msg.what = Refressh_UI_Value;
+                msg.what = UI_REFRESH;
                 msg.arg1 = nProgress;
                 LoginView.this.myhandler.sendMessage(msg);
                 nProgress++;
@@ -174,10 +202,12 @@ public class LoginView extends Activity {
             }
             Message msg = new Message();
             if(bTerminateFlag){
-                msg.what = Terminate_Progress;
+                msg.what = LOGIN_RESULT;
+                msg.arg1 = LOGIN_RESULT_FAIL;
             }
             else {
-                msg.what = Login_Success;
+                msg.what = LOGIN_RESULT;
+                msg.arg1 = LOGIN_RESULT_SUCCESS;
             }
             LoginView.this.myhandler.sendMessage(msg);
         }
@@ -186,7 +216,7 @@ public class LoginView extends Activity {
     Handler myhandler = new Handler(){
         @Override
         public void handleMessage(Message msg){
-            if(msg.what == Refressh_UI_Value){
+            if(msg.what == UI_REFRESH){
                 if(msg.arg1 == nThresholdVerify){
                     textview_login_state.setText(R.string.str_login_state_verify);
                 }
@@ -198,17 +228,26 @@ public class LoginView extends Activity {
                 }
                 progressbar_login.setProgress(msg.arg1);
             }
-            else if (msg.what == Terminate_Progress){
-                progressbar_login.setVisibility(View.GONE);
-                edittext_user.setEnabled(true);
-                edittext_password.setEnabled(true);
-                btn_login.setEnabled(true);
-
-                textview_login_state.setTextColor(Color.rgb(255,0,0));
-                textview_login_state.setVisibility(View.VISIBLE);
-                textview_login_state.setText(R.string.str_logoin_fail);
+            else if (msg.what == LOGIN_VERIFY){
+                if(msg.arg1 == LOGIN_VERIFY_FAIL){
+                    bTerminateFlag = true;
+                }
+                else if(msg.arg1 == LOGIN_VERIFY_SUCCESS){
+                    bVerifySuccess = true;
+                }
             }
-            else if(msg.what == Login_Success){
+            else if (msg.what == LOGIN_RESULT) {
+                if(msg.arg1 == LOGIN_RESULT_FAIL){
+                    progressbar_login.setVisibility(View.GONE);
+                    edittext_user.setEnabled(true);
+                    edittext_password.setEnabled(true);
+                    btn_login.setEnabled(true);
+
+                    textview_login_state.setTextColor(Color.rgb(255,0,0));
+                    textview_login_state.setVisibility(View.VISIBLE);
+                    textview_login_state.setText(R.string.str_logoin_fail);
+                }
+                else if(msg.arg1 == LOGIN_RESULT_SUCCESS){
                     progressbar_login.setVisibility(View.GONE);
                     textview_login_state.setVisibility(View.GONE);
                     edittext_user.setEnabled(true);
@@ -219,6 +258,7 @@ public class LoginView extends Activity {
                     in.setClassName(getApplicationContext(), "smallf.CycleNow.MainFrameView");
                     startActivity(in);
                     LoginView.this.finish();
+                }
             }
 
             super.handleMessage(msg);
