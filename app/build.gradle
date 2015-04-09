@@ -23,4 +23,6 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:21.0.3'
     compile files('Libs/AmarinoLibrary_v0_55.jar')
+    compile files('libs/kxml2-2.3.0.jar')
+    compile files('libs/mpandroidchartlibrary-2-0-2.jar')
 }

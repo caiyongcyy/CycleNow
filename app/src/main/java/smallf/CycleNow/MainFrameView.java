@@ -1,7 +1,10 @@
 package smallf.CycleNow;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.app.Activity;
 import android.view.Gravity;
@@ -21,11 +24,23 @@ import android.widget.SimpleAdapter;
 import android.widget.ListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
 import android.content.Context;
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
 
 /**
@@ -41,6 +56,8 @@ public class MainFrameView extends Activity {
     ListView myList;  // ListView控件
     List<Map<String, Object>> m_Data;
     Intent intent;
+    LineChart mchart;
+    Typeface tf;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +86,7 @@ public class MainFrameView extends Activity {
 
         Button button_start = (Button)findViewById(R.id.button_start);
         button_start.setOnClickListener(new View.OnClickListener(){
-            boolean pressed = false;
+        boolean pressed = false;
 
             @Override
             public void onClick(View v) {
@@ -102,6 +119,11 @@ public class MainFrameView extends Activity {
                 startActivity(in);
             }
         });
+
+        //根据GPX文件话路线海拔图
+        mchart = (LineChart) findViewById(R.id.chart1);
+        dataInit();
+
     }
 
     private List<Map<String, Object>> getData() {
@@ -212,6 +234,142 @@ public class MainFrameView extends Activity {
         intent.setAction("android.intent.action.cmd");
         intent.putExtra("cmd", CMD_RUN);
         sendBroadcast(intent);//发送广播
+    }
+
+    //路线数据读取
+    private void dataInit() {
+
+        //********************CUBIC LINE**************************************/
+        mchart.setDescription("HOLY");
+
+        // enable value highlighting
+        mchart.setHighlightEnabled(true);
+
+        // enable touch gestures
+        mchart.setTouchEnabled(true);
+
+        // enable scaling and dragging
+        mchart.setDragEnabled(true);
+        mchart.setScaleEnabled(true);
+
+        // if disabled, scaling can be done on x- and y-axis separately
+        mchart.setPinchZoom(false);
+
+        mchart.setDrawGridBackground(false);
+
+        //tf = Typeface.createFromAsset(getAssets(), "OpenSans-Regular.ttf");
+        //XAxis x = mchart.getXAxis();
+        //x.setTypeface(tf);
+        //tf = Typeface.createFromAsset(getAssets(), "OpenSans-Bold.ttf");
+        YAxis y = mchart.getAxisLeft();
+        //y.setTypeface(tf);
+        y.setLabelCount(5);
+
+        mchart.getAxisRight().setEnabled(false);
+
+        // add data
+        setData();
+
+        mchart.getLegend().setEnabled(false);
+
+        mchart.animateXY(2000, 2000);
+
+        // dont forget to refresh the drawing
+        mchart.invalidate();
+        return;
+    }
+
+    //路线数据计算
+    private void setData() {
+        ArrayList<String> xVals = new ArrayList<String>();
+        ArrayList<Entry> vals1 = new ArrayList<Entry>();
+        try {
+            String fileName = getSDPath() +"/" + "hcchu/test.gpx";
+            File file = new File(fileName);
+            BufferedReader br = null;
+            //StringReader sr = null;
+            FileReader mfile = new FileReader(file);
+            Double Distance;
+            Distance = 0.0;
+
+            br = new BufferedReader(mfile);
+            ArrayList<Node> nodes = new ArrayList<Node>();
+            nodes = GPXData.Gpxparser(br); // gpxData is an arraylist with trkpt and wpt
+
+
+            for (int i = 0; i < nodes.size(); i++) {
+
+
+                String type = nodes.get(i).getType(); // getType() returns trkpt or wpt
+                if (type == "trkpt") {
+                    //y轴 海拔
+                    vals1.add(new Entry(nodes.get(i).getEle(), i));
+                    //x轴 位移
+                    if(i == 0){
+                        xVals.add(0 + "");
+                    }
+                    else{
+                        Distance = Distance + GetDistance(nodes.get(i).getLat(),nodes.get(i).getLon(),nodes.get(i-1).getLat(),nodes.get(i-1).getLon());
+                        xVals.add(Distance + "");
+                    }
+                }
+            }
+            br.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // create a dataset and give it a type
+        LineDataSet set1 = new LineDataSet(vals1, "DataSet 1");
+        set1.setDrawCubic(true);
+        set1.setCubicIntensity(0.2f);
+        set1.setDrawFilled(true);
+        set1.setDrawCircles(false);
+        set1.setLineWidth(2f);
+        set1.setCircleSize(5f);
+        set1.setHighLightColor(Color.rgb(244, 117, 117));
+        set1.setColor(Color.rgb(104, 241, 175));
+        set1.setFillColor(Color.rgb(104, 241, 175));
+        set1.setFillColor(ColorTemplate.getHoloBlue());
+
+        // create a data object with the datasets
+        LineData data = new LineData(xVals, set1);
+        //data.setValueTypeface(tf);
+        data.setValueTextSize(9f);
+        data.setDrawValues(false);
+
+        // set data
+        mchart.setData(data);
+        return;
+    }
+
+    //根据经纬度计算距离
+    private static double rad(double d)
+    {
+        return d * Math.PI / 180.0;
+    }
+    public static double GetDistance(double lat1, double lng1, double lat2, double lng2)
+    {
+        double radLat1 = rad(lat1);
+        double radLat2 = rad(lat2);
+        double a = radLat1 - radLat2;
+        double b = rad(lng1) - rad(lng2);
+        double s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a/2),2) +
+                Math.cos(radLat1)*Math.cos(radLat2)*Math.pow(Math.sin(b/2),2)));
+        s = s * 6378137; //EARTH_RADIUS
+        s = Math.round(s * 10000) / 10000;
+        return s;
+    }
+
+    public String getSDPath(){
+        File sdDir = null;
+        //boolean sdCardExist = Environment.getExternalStorageState().equals(Android.os.Environment.MEDIA_MOUNTED);   //判断sd卡是否存在
+        //if   (sdCardExist)
+        //{
+        sdDir = Environment.getExternalStorageDirectory();//获取根目录
+        //}
+        return sdDir.toString();
+
     }
 }
 

@@ -87,8 +87,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="appcompat-v7-21.0.3" level="project" />
     <orderEntry type="library" exported="" name="AmarinoLibrary_v0_55" level="project" />
+    <orderEntry type="library" exported="" name="mpandroidchartlibrary-2-0-2" level="project" />
     <orderEntry type="library" exported="" name="support-v4-21.0.3" level="project" />
     <orderEntry type="library" exported="" name="support-annotations-21.0.3" level="project" />
+    <orderEntry type="library" exported="" name="kxml2-2.3.0" level="project" />
   </component>
 </module>
 
